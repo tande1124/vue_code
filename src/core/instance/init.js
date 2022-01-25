@@ -1,11 +1,9 @@
 /* @flow */
 
-import config from "../config";
 import { initProxy } from "./proxy";
 import { initState } from "./state";
 import { initRender } from "./render";
 import { initEvents } from "./events";
-import { mark, measure } from "../util/perf";
 import { initLifecycle, callHook } from "./lifecycle";
 import { initProvide, initInjections } from "./inject";
 import { extend, mergeOptions, formatComponentName } from "../util/index";
@@ -69,11 +67,11 @@ export function initMixin(Vue: Class<Component>) {
     // 调用 beforeCreate 钩子函数
     callHook(vm, "beforeCreate");
     // 初始化组件的inject配置项，得到result[key] = val 形式的配置对象，然后对结果数据进行响应式处理，并处理每个key到vm实例
-    initInjections(vm); // resolve injections before data/props
+    initInjections(vm);
     // 数据响应式的重点，处理props、methods、data、computed、watch
     initState(vm);
     // 解析组件配置项上的provide对象，将其挂载到vm._provided属性上
-    initProvide(vm); // resolve provide after data/props
+    initProvide(vm);
     // 调用 created钩子函数
     callHook(vm, "created");
 
