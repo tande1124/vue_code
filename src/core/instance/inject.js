@@ -15,7 +15,12 @@ export function initProvide(vm: Component) {
   }
 }
 
+/**
+ * 解析inject 选项
+ * @param {*} vm { key:val } 形式的配置对象
+ */
 export function initInjections(vm: Component) {
+  // 从配置项上的解析 inject 选项，最后得到 result[key] = val 的结果
   const result = resolveInject(vm.$options.inject, vm);
   if (result) {
     toggleObserving(false);
@@ -38,6 +43,7 @@ export function initInjections(vm: Component) {
   }
 }
 
+//
 export function resolveInject(inject: any, vm: Component): ?Object {
   if (inject) {
     const result = Object.create(null);

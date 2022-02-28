@@ -1,4 +1,4 @@
-/* @flow */
+  /* @flow */
 
 import config from "../config";
 import Watcher from "../observer/watcher";
@@ -51,7 +51,7 @@ export function proxy(target: Object, sourceKey: string, key: string) {
  * 数据响应式
  *   数据响应式的入口：分别处理 props、methods、data、computed、watch
  *   优先级：props、methods、data、computed对象中的属性不能出现重复，优先级和列出顺序一致
- *     其中 computed 中的 key 不能和props、data中的key重复，methods不影响
+ *          其中 computed 中的 key 不能和props、data中的key重复，methods不影响
  * @param {*} vm
  */
 export function initState(vm: Component) {
@@ -86,7 +86,7 @@ export function initState(vm: Component) {
   if (opts.watch && opts.watch !== nativeWatch) {
     initWatch(vm, opts.watch);
   }
-}
+}    
 
 // 处理 props对象，为props对象的每个属性设置响应式，并将其代理到 vm 实例上
 function initProps(vm: Component, propsOptions: Object) {
@@ -95,6 +95,7 @@ function initProps(vm: Component, propsOptions: Object) {
   // 缓存props的每个key，性能优化
   const keys = (vm.$options._propKeys = []);
   const isRoot = !vm.$parent;
+  
 
   if (!isRoot) {
     toggleObserving(false);
@@ -396,9 +397,6 @@ function initWatch(vm: Component, watch: Object) {
       // handler 为数组，遍历数组，获取其中的每一项，然后调用 createWatcher
       for (let i = 0; i < handler.length; i++) {
         createWatcher(vm, key, handler[i]);
-      }
-    } else {
-      createWatcher(vm, key, handler);
     }
   }
 }

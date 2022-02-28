@@ -1,4 +1,16 @@
-/* @flow */
+// Vue 的初始化过程 (new Vue(options)) 都做了什么？
+// 处理组件配置项
+//    1. 初始化根组件进行了选项合并操作，将全局配置合并到跟逐渐的局部配置上
+//    2. 初始化每个子组件 做了一些性能优化，将组件配置对象上的一些深层次属性放到 vm.$options 选项中，以提高代码的执行效率
+// 初始化组件实例的关系属性,比如 parent、children、root、 refs等
+// 处理自定义事件
+// 调用 beforeCreate 钩子函数
+// 初始化组件的inject配置项，得到result[key] = val 形式的配置对象，然后对结果数据进行浅层的响应式处理，并处理每个key到vm实例
+// 数据响应式，处理props、merthods、data、computed、watch 等选项
+// 解析组件配置上的provide 对象，将其挂载到vm._provided属性上
+// 调用 created 钩子函数
+// 如果发现配置上有el选项，则自动调用 mounted 方法，也就是说有了el选项，就不需要在再手动调用 mouted 方法
+// 接下来则进入挂载阶段
 
 import { initProxy } from "./proxy";
 import { initState } from "./state";
@@ -37,9 +49,11 @@ export function initMixin(Vue: Class<Component>) {
     } else {
       /**
        * 初始化根组件走这里，合并vue 的全局配置到根组件的局部配置，比如 Vue.component 注册的全局组件会合并到根实例的 components选项中
+       *
        * 至于每个子组件的选项合并则发生在两个地方
-       * 1、 Vue.components 方法注册的全局组件在注册时做了选项合并
-       * 2、{components: {xx}} 方法注册的局部组件在执行编译器生成的render 函数时做了选项合并，包括根组件中饭的components配置
+       * 1、 Vue.components(compNamem, comp) 方法注册的全局组件在注册时做了选项合并  合并内置的全局组件和用户自己的注册的全局组件，最终都会放到 全局的 components 选项中
+       * 2、{components: {xx}}  局部组件 方法注册的局部组件在执行编译器生成的render 函数时做了选项合并，包括根组件中饭的components配置
+       * 3、 这里根据根组件的情况了
        */
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
@@ -55,23 +69,35 @@ export function initMixin(Vue: Class<Component>) {
       vm._renderProxy = vm;
     }
     vm._self = vm;
+
+    /**   重点 整个初始化最重要的部分，也是核心 */
+
     // 初始化组件会理关系属性，比如：$parents、$children、$root、$refs等
     initLifecycle(vm);
+
     /**
      * 初始化自定义事件，这里需要注意一点，所以在<comp @click="handClick"/> 上注册的事件，监听者不是父组件
      * 而是子组件本身，也就是说事件的派发和监听者都是子组件本身，和父组件无法
+     * this.$emit('click')   this.$on('click')
      */
     initEvents(vm);
-    // 解析组件的插槽信息，得到vm.$slot,处理渲染函数，得到vm.$createElement方法，即h函数
+
+    // 解析组件的插槽信息，得到vm.$slots,处理渲染函数，得到vm.$createElement方法，即h函数
     initRender(vm);
+
     // 调用 beforeCreate 钩子函数
     callHook(vm, "beforeCreate");
+
     // 初始化组件的inject配置项，得到result[key] = val 形式的配置对象，然后对结果数据进行响应式处理，并处理每个key到vm实例
+    // 通过provide/inject可以轻松实现跨级访问祖先组件的数据
     initInjections(vm);
+
     // 数据响应式的重点，处理props、methods、data、computed、watch
     initState(vm);
+
     // 解析组件配置项上的provide对象，将其挂载到vm._provided属性上
     initProvide(vm);
+
     // 调用 created钩子函数
     callHook(vm, "created");
 
@@ -119,6 +145,7 @@ export function resolveConstructorOptions(Ctor: Class<Component>) {
   if (Ctor.super) {
     // 存于基类，递归解析基类构造函数的选项
     const superOptions = resolveConstructorOptions(Ctor.super);
+    // 缓存
     const cachedSuperOptions = Ctor.superOptions;
     if (superOptions !== cachedSuperOptions) {
       // 说明基类构造函数选项已经发生改变，需要重新设置
@@ -127,10 +154,11 @@ export function resolveConstructorOptions(Ctor: Class<Component>) {
       const modifiedOptions = resolveModifiedOptions(Ctor);
       // 如果存在被修改或增加的选项，则合并两个选项
       if (modifiedOptions) {
+        // 将更改的选项 和 extend 选项合并
         extend(Ctor.extendOptions, modifiedOptions);
       }
 
-      // 选项合并，将合并结果赋值为Ctor.options
+      // 选项合并，将新的选项合并结果赋值为Ctor.options
       options = Ctor.options = mergeOptions(superOptions, Ctor.extendOptions);
       if (options.name) {
         options.components[options.name] = Ctor;
